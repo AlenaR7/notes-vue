@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import NotesUI from '../components/NotesUI.vue'
-import ChangeNotesUI from '../components/ChangeNotesUI.vue'
+import NotesUI from '../views/NotesUI.vue'
+import ChangeNotesUI from '../views/ChangeNotesUI.vue'
 
 Vue.use(VueRouter)
 

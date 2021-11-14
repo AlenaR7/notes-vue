@@ -5,7 +5,7 @@
                 <div class="header">
                     <h1>Заметки</h1>
                 </div>
-                <div class="create-note button background-blue" @click="openCreateModal()">
+                <div class="create-note button background-blue d-flex align-center" @click="openCreateModal()">
                     <i class="fas fa-plus"></i>
                 </div>
             </div>

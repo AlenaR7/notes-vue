@@ -65,7 +65,7 @@
             </div>
         </div>
         <router-link :to="{name: 'NotesUI'}">
-            <div class="back button">
+            <div class="back button d-flex align-center">
                 <i class="fas fa-arrow-left"></i>
             </div>
         </router-link>
