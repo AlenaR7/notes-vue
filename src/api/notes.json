@@ -1,0 +1,23 @@
+[
+  {
+    "id": "caf5047f-e9ec-4661-af05-3bc62bf98a12",
+    "header": "Заметка 1",
+    "todo": [
+      {
+        "id": "caf5047f-e9ec-4661-af05-3bc62bf98a13",
+        "name": "Задача 1",
+        "done": true
+      },
+      {
+        "id": "caf5047f-e9ec-4661-af05-3bc62bf98a14",
+        "name": "Задача 2",
+        "done": false
+      },
+      {
+        "id": "caf5047f-e9ec-4661-af05-3bc62bf98a15",
+        "name": "Задача 3",
+        "done": false
+      }
+    ]
+  }
+]
