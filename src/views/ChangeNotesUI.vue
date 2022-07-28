@@ -8,31 +8,17 @@
                             placeholder="Введите название заметки"
                             v-if="note"
                             v-model="note.header"
-                            @input="setChanged"/>
+                            />
                 </div>
                 <div class="d-flex">
                     <div class="button d-flex align-center background-green" v-if="isChanged" @click="saveManual">
                         <i class="action far fa-check-square transform"></i>
                         сохранить изменения
                     </div>
-                    <div class="button background-gray d-flex align-center" @click="clearChanges" v-if="isChanged">
-                        <i class="action fas fa-history"></i>
-                        отменить редактирование
-                    </div>
-                    <div class="button background-gray d-flex align-center" @click="cancelChanges" v-if="lastNote">
-                        <i class="action fas fa-history"></i>
-                        отменить внесенное изменение
-                    </div>
-                    <div class="button background-gray d-flex align-center" @click="repeatChanges" v-if="cancelledNote">
-                        <i class="action fas fa-history transform-svg"></i>
-                        повторить отменённое изменение
-                    </div>
-
                     <div class="button background-blue d-flex align-center" @click="openCreateTodoModal()">
                         <i class="action far fa-plus-square"></i>
                         добавить задачу
                     </div>
-
                     <div class="button d-flex align-center background-red" @click="openDeleteModal()">
                         <i class="action far fa-trash-alt"></i>
                         удалить заметку
@@ -46,13 +32,12 @@
                         <th>Задачи</th>
                         <th>Действия</th>
                     </tr>
-                    <tr v-for="todo in note.todo" :key="todo.id">
+                    <tr v-for="todo in filteredNotesTodo" :key="todo.id">
                         <td>
-                            <input type="checkbox" v-model="todo.done" @change="setChanged"/>
+                            <input type="checkbox" v-model="todo.done"/>
                         </td>
                         <td>
-                            <textarea v-model="todo.name" @input="setChanged">
-                            </textarea>
+                            {{todo.name}}
                         </td>
                         <td>
                             <i class="action far fa-trash-alt red"
@@ -64,12 +49,24 @@
                 </table>
             </div>
         </div>
-        <router-link :to="{name: 'NotesUI'}">
-            <div class="back button d-flex align-center">
-                <i class="fas fa-arrow-left"></i>
+        <div class="d-flex justify-between">
+            <router-link :to="{name: 'NotesUI'}">
+                <div class="back button d-flex align-center">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+            </router-link>
+            <div class="d-flex filters" v-if="filterNote.length">
+                <div class="button background-gray d-flex align-center" :class="{active: isActive === 0}" @click="statusNote = '', isActive = 0">
+                    Все
+                </div>
+                <div class="button background-red d-flex align-center" :class="{active: isActive === 1}" @click="statusNote = 'active', isActive = 1">
+                    Активные
+                </div>
+                <div class="button background-green d-flex align-center" :class="{active: isActive === 2}" @click="statusNote = 'done', isActive = 2">
+                    Выполненные
+                </div>
             </div>
-        </router-link>
-
+        </div>
         <Dialog v-model="isDeleteModal"
                 title="Вы действительно хотите удалить заметку?"
                 @agree="deleteNote"
@@ -109,14 +106,15 @@
             return {
                 requestedNote: null,
                 note: null,
-                lastNote: null,
-                cancelledNote: null,
                 currentTodo: "",
                 todoName: "",
                 isChanged: false,
                 isDeleteModal: false,
                 isDeleteTodoModal: false,
                 isCreateModal: false,
+                filterNote: {},
+                statusNote: '',
+                isActive: 0,
             }
         },
 
@@ -132,7 +130,6 @@
                 })
             },
             async saveNote() {
-                this.lastNote = lodash.cloneDeep(this.requestedNote);
                 await request.updateNote(this.note.id, this.note);
                 //обновляем список заметок
                 this.getNotes();
@@ -158,7 +155,6 @@
             deleteTodo() {
                 this.note.todo = this.note.todo.filter(el => el.id !== this.currentTodo.id);
                 this.isDeleteTodoModal = false;
-                this.setChanged();
             },
             //устанавливаем флаг изменения состояния
             setChanged() {
@@ -169,26 +165,7 @@
                 this.note = lodash.cloneDeep(this.requestedNote);
             },
             saveManual() {
-                this.cancelledNote = "";
                 this.saveNote();
-            },
-            clearChanges() {
-                this.setFromRequested();
-                this.isChanged = false;
-            },
-            async cancelChanges() {
-                this.cancelledNote = lodash.cloneDeep(this.note);
-                //записываем заметку с предыдущими изменениями как текущую
-                this.note = lodash.cloneDeep(this.lastNote);
-                await this.saveNote();
-                this.lastNote = "";
-            },
-            async repeatChanges() {
-                //записываем заметку с отмененными изменениями как текущую
-                this.note = lodash.cloneDeep(this.cancelledNote);
-                await this.saveNote();
-                this.lastNote = "";
-                this.cancelledNote = "";
             },
             openDeleteModal() {
                 this.isDeleteModal = true;
@@ -201,7 +178,23 @@
                 this.isCreateModal = true;
                 this.todoName = "";
             },
+            show: function() {
+                this.isActive = true
+            }
         },
+
+        computed: {
+            filteredNotesTodo: function () {
+                this.filterNote = lodash.cloneDeep(this.note.todo);
+
+                if(this.statusNote)//если установлен фильтр
+                    this.filterNote = this.filterNote.filter(elem => {
+                        return (this.statusNote === 'active' && !elem.done) || (this.statusNote === 'done' && elem.done);
+                    });
+
+                return this.filterNote;
+            }
+        }
     }
 </script>
 
@@ -216,7 +209,7 @@
     .back {
         background: gray;
         display: flex;
-        max-width: 120px;
+        max-width: 130px;
         margin-top: 20px;
         margin-left: 0;
 

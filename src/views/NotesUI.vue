@@ -76,7 +76,7 @@
                 note: '',
                 noteName: '',
                 notes: [],
-                limitNotes: 2,
+                limitNotes: 10,
                 isDeleteModal: false,
                 isCreateModal: false,
             }
