@@ -2,13 +2,8 @@
     <div class="change-notes-ui wrap">
         <div class="content d-flex flex-column">
             <div class="header-table d-flex justify-between align-center">
-                <div class="header">
-                    <input
-                            type="text"
-                            placeholder="Введите название заметки"
-                            v-if="note"
-                            v-model="note.header"
-                            />
+                <div class="header" v-if="note">
+                    {{note.header}}
                 </div>
                 <div class="d-flex">
                     <div class="button d-flex align-center background-green" v-if="isChanged" @click="saveManual">
@@ -25,7 +20,7 @@
                     </div>
                 </div>
             </div>
-            <div class="content-table" v-if="note">
+            <div class="content-table" v-if="filteredNotesTodo">
                 <table border="1" width="100%" cellpadding="5">
                     <tr>
                         <th>Выполнено</th>
@@ -34,7 +29,7 @@
                     </tr>
                     <tr v-for="todo in filteredNotesTodo" :key="todo.id">
                         <td>
-                            <input type="checkbox" v-model="todo.done"/>
+                            <input type="checkbox" v-model="todo.done" @change="setChanged"/>
                         </td>
                         <td>
                             {{todo.name}}
@@ -55,7 +50,7 @@
                     <i class="fas fa-arrow-left"></i>
                 </div>
             </router-link>
-            <div class="d-flex filters" v-if="filterNote.length">
+            <div class="d-flex filters" v-if="note.todo && note.todo.length">
                 <div class="button background-gray d-flex align-center" :class="{active: isActive === 0}" @click="statusNote = '', isActive = 0">
                     Все
                 </div>
@@ -95,7 +90,7 @@
     import Dialog from '../components/Dialog';
     import request from '../api/request.js'
     import {v4} from 'uuid';
-    import lodash from 'lodash';
+    import _ from 'lodash';
 
     export default {
         name: 'ChangeNotesUI',
@@ -104,7 +99,6 @@
         },
         data() {
             return {
-                requestedNote: null,
                 note: null,
                 currentTodo: "",
                 todoName: "",
@@ -112,7 +106,6 @@
                 isDeleteModal: false,
                 isDeleteTodoModal: false,
                 isCreateModal: false,
-                filterNote: {},
                 statusNote: '',
                 isActive: 0,
             }
@@ -120,24 +113,32 @@
 
         async created() {
             await this.getNotes();
-            this.setFromRequested();
         },
 
         methods: {
             getNotes() {
                 request.getNotes(this.$route.params.id).then(note => {
-                    this.requestedNote = note;
+                    this.note = note;
                 })
             },
             async saveNote() {
-                await request.updateNote(this.note.id, this.note);
+                let newNote = _.cloneDeep(this.note); //клон данных с бэка
+
+                this.filteredNotesTodo.forEach(elem => {
+                    const task = newNote.todo.find(obj => obj.id === elem.id);
+
+                    if(task)
+                        task.done = elem.done;
+                });
+
+                await request.updateNote(this.note.id, newNote);
                 //обновляем список заметок
-                this.getNotes();
+                await this.getNotes();
                 this.isChanged = false;
             },
             async deleteNote() {
                 await request.deleteNote(this.note.id);
-                this.getNotes();
+                await this.getNotes();
                 this.isDeleteModal = false;
                 await this.$router.push({name: 'NotesUI'});
             },
@@ -150,7 +151,6 @@
 
                 this.note.todo.push(newTodo);
                 this.isCreateModal = false;
-                this.setChanged();
             },
             deleteTodo() {
                 this.note.todo = this.note.todo.filter(el => el.id !== this.currentTodo.id);
@@ -159,10 +159,6 @@
             //устанавливаем флаг изменения состояния
             setChanged() {
                 this.isChanged = true;
-            },
-            //создаем клон обьекта заметки
-            setFromRequested() {
-                this.note = lodash.cloneDeep(this.requestedNote);
             },
             saveManual() {
                 this.saveNote();
@@ -182,17 +178,16 @@
                 this.isActive = true
             }
         },
-
         computed: {
             filteredNotesTodo: function () {
-                this.filterNote = lodash.cloneDeep(this.note.todo);
+                let filterNote = _.cloneDeep(this.note?.todo) || [];
 
                 if(this.statusNote)//если установлен фильтр
-                    this.filterNote = this.filterNote.filter(elem => {
+                    filterNote = filterNote.filter(elem => {
                         return (this.statusNote === 'active' && !elem.done) || (this.statusNote === 'done' && elem.done);
                     });
 
-                return this.filterNote;
+                return filterNote;
             }
         }
     }
