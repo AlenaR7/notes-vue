@@ -151,10 +151,12 @@
 
                 this.note.todo.push(newTodo);
                 this.isCreateModal = false;
+                this.setChanged();
             },
             deleteTodo() {
                 this.note.todo = this.note.todo.filter(el => el.id !== this.currentTodo.id);
                 this.isDeleteTodoModal = false;
+                this.setChanged();
             },
             //устанавливаем флаг изменения состояния
             setChanged() {
